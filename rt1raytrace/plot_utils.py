@@ -16,6 +16,9 @@ from scipy import misc, ndimage, optimize, signal
 from scipy import special
 
 
+__all__ = ['imshow_cbar','contourf_cbar']
+
+
 params = {
         'font.family'      : 'Times New Roman', # font familyの設定
         'mathtext.fontset' : 'stix'           , # math fontの設定

@@ -15,6 +15,8 @@ import scipy.sparse as sparse
 import pandas as pd
 import os
 
+__all__ = ['Raytrace']
+
 
 @dataclass
 class Ray:
