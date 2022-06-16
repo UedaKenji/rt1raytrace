@@ -15,7 +15,7 @@ import scipy.sparse as sparse
 import pandas as pd
 import os
 
-from rt1raytrace.plot_utils import imshow_cbar
+from rt1raytrace.plot_utils import *
 
 __all__ = ['Raytrace']
 
