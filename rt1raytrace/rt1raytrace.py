@@ -17,7 +17,7 @@ import os
 
 from rt1raytrace.plot_utils import *
 
-__all__ = ['Raytrace','Circle']
+__all__ = ['Raytrace','Circle','Ray']
 
 
 @dataclass
