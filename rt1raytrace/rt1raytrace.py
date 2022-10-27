@@ -90,6 +90,22 @@ class Ray:
         Y = R*np.sin(Phi)
         return X,Y,Z
 
+    def Direction_Cos(self,
+        R: np.ndarray,
+        flatten:bool =True,
+        ):
+        R1 = (self.R0 * np.sin(self.Ho_theta0)).flatten()
+        Tan = np.sqrt(1+np.tan(self.Ve_theta0)**2).flatten() 
+        Cos = np.einsum('i,j->ij',R1,1/R)
+        Cos[Cos>1] = 1.0
+        Direction_cos = np.einsum('ij,i->ij',Cos,1/Tan)
+
+        if flatten == False:
+            Direction_cos = Direction_cos.reshape(*self.shape,R.size)
+            print(Direction_cos.shape)
+        
+        return Direction_cos
+        
 @dataclass
 class Circle:
     
@@ -143,10 +159,18 @@ class Circle:
 
 
 class Raytrace(frame.Frame):
-    def load_model(path:str): 
-        return pd.read_pickle(path)
+    def load_model(
+        path:str, 
+        is_plot:bool=False
+        ) :
+        model:Raytrace = pd.read_pickle(path) 
+        if is_plot: model.show_ims()
+        return model
 
-    def save_model(self,name:str,path:str=''):
+    def save_model(self,
+        name:str,
+        path:str=''
+        ):
         N = len(self.rays)
         class_name = type(self).__name__
 
@@ -404,6 +428,24 @@ class Raytrace(frame.Frame):
             Z = Z[:,hoge]
             for i in range(R.shape[1]):
                 ax.plot(R[:,i],Z[:,i],color=cycle(int(i%10)))
+
+    def show_ims(self,
+
+        ):
+        '''
+        失敗した例のみ表示
+        '''
+        N = len(self.rays)
+        fig,ax = plt.subplots(1,N,figsize=(N*8,7))
+        for i in range(N):
+            imshow_cbar(fig,ax[i],self.rays[i].Length,origin='lower',cmap='turbo')
+
+        fig.suptitle('flocal length: '+str(self.focal_length)+', '
+                    +'image_size: '+str(self.image_size)+', '
+                    +'center_angles: '+str(self.center_angles)+', '
+                    +'location: '+str(self.location)+', '
+                    +'rotation: '+str(self.rotation),fontsize=25)
+        
     
     def raytrace(self,
         ray: Ray,
@@ -540,7 +582,7 @@ class Raytrace(frame.Frame):
         print(i_mainline)
         """
 
-        self.test = line_index_list
+        #self.test = line_index_list
 
 
         for i in range(len(self.all_arcs)):
@@ -872,7 +914,7 @@ class Raytrace(frame.Frame):
             print(i_mainline)
             """
 
-            self.test = line_index_list
+            #self.test = line_index_list
 
 
             for i in range(len(self.all_arcs)):
