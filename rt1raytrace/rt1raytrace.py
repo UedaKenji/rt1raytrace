@@ -157,7 +157,6 @@ class Circle:
 
 
 
-
 class Raytrace(frame.Frame):
     def load_model(
         path:str, 
@@ -1212,6 +1211,14 @@ class Raytrace(frame.Frame):
         self.R_inp = load['R_inp']
         self.Z0 = load['ZR0'][0]
         self.R0 = load['ZR0'][1]
+
+def Raytrace_load_model(
+    path:str,
+    is_plot:bool=False,
+    ) -> Raytrace:
+    model:Raytrace = pd.read_pickle(path) 
+    if is_plot: model.show_ims()
+    return model
 
 @jit
 def d2min(x,y,xs,ys):
