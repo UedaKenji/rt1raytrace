@@ -224,13 +224,13 @@ class Raytrace(frame.Frame):
         focal_length: float,
             focal_length [m]
         image_length: Tuple[float,float],
-            like as ( Height [m], Width [m] )
+            like as ( Height [m], Width     [m] )
         image_shape  : Tuple[int,int],
             this param is the shape of array associated with image, like as ( num of H, num of W )
-        location: Tuple[float,float],
+        location: Tuple[float, float, float],
             equal to ( Z_cam, Phi_cam, R_cam ) 
         center_angles: Tuple[float,float],
-            equal to (h_angle[deg], w_angle)
+            equal to (h_angle[deg], w_angle[deg])
         rotation: float=0,
             the angle of camera rotation [rad]
         Reuturns
@@ -240,6 +240,9 @@ class Raytrace(frame.Frame):
         h_length, w_length = image_size
         h_num, w_num = image_shape
         h_ang0, w_ang0 = center_angles
+
+        theta_ve0 =   np.pi * h_ang0 / 180
+        theta_ho0 =   np.pi * w_ang0 / 180
         
         self.focal_length = focal_length
         self.image_size = image_size 
@@ -258,7 +261,11 @@ class Raytrace(frame.Frame):
         w_ang = np.arctan(w/focal_length) #+ np.pi * w_ang0 / 180
 
         Ve_cam,Ho_cam = np.meshgrid(h_ang,w_ang,indexing='ij')
-        self.Ho_cam, self.Ve_cam= cos *Ho_cam - sin*Ve_cam+ np.pi * w_ang0 / 180 , sin * Ho_cam + cos*Ve_cam+ np.pi * h_ang0 / 180
+        self.Ho_cam, self.Ve_cam= cos *Ho_cam - sin*Ve_cam, sin * Ho_cam + cos*Ve_cam #カメラのローテーションの効果
+        self.Ve_cam = self.Ve_cam + theta_ve0
+        #self.Ho_cam = np.arctan2(np.sin(self.Ho_cam), np.cos(self.Ho_cam)) + theta_ho0 # 上下に光軸が傾いているとこのような座標変換が必要
+        self.Ho_cam = self.Ho_cam + theta_ho0 # 上下に光軸が傾いているとこのような座標変換が必要
+
 
         self.ray_1st = Ray( Ve_theta0 = self.Ve_cam,
                             Ho_theta0 = self.Ho_cam,
@@ -268,6 +275,89 @@ class Raytrace(frame.Frame):
                             )
  
     
+    def set_camera2(self,
+        focal_length: float,
+        image_size  : Tuple[float,float],
+        image_shape : Tuple[int,int],
+        location    : Tuple[float,float,float],
+        center_angles: Tuple[float,float],
+        rotation    : float=0,
+        ) -> None:
+        
+        """
+        set camera infomation
+
+        Parameters
+        ----------
+        focal_length: float,
+            focal_length [m]
+        image_length: Tuple[float,float],
+            like as ( Height [m], Width     [m] )
+        image_shape  : Tuple[int,int],
+            this param is the shape of array associated with image, like as ( num of H, num of W )
+        location: Tuple[float, float, float],
+            equal to ( Z_cam, Phi_cam, R_cam ) 
+        center_angles: Tuple[float,float],
+            equal to (h_angle[deg], w_angle[deg])
+        rotation: float=0,
+            the angle of camera rotation [rad]
+        Reuturns
+        ----------
+        None
+        """
+        h_length, w_length = image_size
+        h_num, w_num = image_shape
+        h_ang0, w_ang0 = center_angles
+
+        theta_ve0 =   np.pi * h_ang0 / 180
+        theta_ho0 =   np.pi * w_ang0 / 180
+        
+        self.focal_length = focal_length
+        self.image_size = image_size 
+        self.center_angles = center_angles
+        self.location = location 
+        self.rotation = rotation 
+
+        self.im_shape = image_shape
+        self.Z_cam,self.Phi_cam, self.R_cam = location
+        cos,sin =  np.cos(rotation*np.pi/180), np.sin(rotation*np.pi /180)
+
+        h = np.linspace( 0.5*h_length *( -1 + 1/h_num), 0.5 *h_length *( 1 - 1/h_num), h_num )
+        w  = np.linspace( 0.5*w_length *( -1 + 1/w_num), 0.5 *w_length *( 1 - 1/w_num), w_num )
+        self.x_im = w 
+        self.y_im = h
+        self.real_im_extent = ( 0.5*w_length,-0.5*w_length, 0.5*h_length,-0.5*w_length)
+
+
+        h_ang = np.arctan(h/focal_length) #+ np.pi * h_ang0 / 180
+        w_ang = np.arctan(w/focal_length) #+ np.pi * w_ang0 / 180
+
+        tan_dv =  h/focal_length
+        tan_dh =  w/focal_length
+
+        self.tan_dv = tan_dv
+        self.tan_dh = tan_dh
+
+        Tan_dv,Tan_dh = np.meshgrid(tan_dv,tan_dh,indexing='ij')
+
+        Tan_dh, Tan_dv = cos *Tan_dh - sin*Tan_dv, sin * Tan_dh + cos*Tan_dv #カメラのローテーションの効果
+        self.Ho_cam = np.arctan(Tan_dh)
+        self.Ve_cam = np.arctan(Tan_dv)
+        xx = np.cos(theta_ve0)*np.cos(theta_ho0) - np.sin(theta_ho0) * Tan_dh - np.sin(theta_ve0) *np.cos(theta_ho0) *Tan_dv
+        yy = np.cos(theta_ve0)*np.sin(theta_ho0) + np.cos(theta_ho0) * Tan_dh - np.sin(theta_ve0) *np.sin(theta_ho0) *Tan_dv
+        zz = np.sin(theta_ve0) + np.cos(theta_ve0) *Tan_dv
+
+        self.Ve_theta0 = np.arctan2(zz, np.sqrt(xx**2+yy**2))
+        self.Ho_theta0 = np.arctan2(yy,xx)
+
+
+        self.ray_1st = Ray( Ve_theta0 = self.Ve_theta0,
+                            Ho_theta0 = self.Ho_theta0,
+                            R0        = self.R_cam,
+                            Z0        = self.Z_cam,
+                            Phi0      = self.Phi_cam,
+                            )
+ 
     def set_angles(self,
         location: Tuple[float,float,float],
         H_angles: np.ndarray         ,
