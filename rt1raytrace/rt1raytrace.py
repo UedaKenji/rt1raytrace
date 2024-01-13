@@ -326,7 +326,7 @@ class Raytrace(frame.Frame):
         w  = np.linspace( 0.5*w_length *( -1 + 1/w_num), 0.5 *w_length *( 1 - 1/w_num), w_num )
         self.x_im = w 
         self.y_im = h
-        self.real_im_extent = ( 0.5*w_length,-0.5*w_length, 0.5*h_length,-0.5*w_length)
+        self.real_im_extent = ( -0.5*w_length,0.5*w_length, -0.5*h_length, 0.5*w_length)
 
 
         h_ang = np.arctan(h/focal_length) #+ np.pi * h_ang0 / 180
