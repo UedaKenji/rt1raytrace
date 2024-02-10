@@ -332,20 +332,20 @@ class Raytrace(frame.Frame):
         h_ang = np.arctan(h/focal_length) #+ np.pi * h_ang0 / 180
         w_ang = np.arctan(w/focal_length) #+ np.pi * w_ang0 / 180
 
-        tan_dv =  h/focal_length
-        tan_dh =  w/focal_length
+        tan_dy =  h/focal_length
+        tan_dx =  w/focal_length
 
-        self.tan_dv = tan_dv
-        self.tan_dh = tan_dh
+        self.tan_dy = tan_dy
+        self.tan_dx = tan_dx
 
-        Tan_dv,Tan_dh = np.meshgrid(tan_dv,tan_dh,indexing='ij')
+        Tan_dy,Tan_dx = np.meshgrid(tan_dy,tan_dx,indexing='ij')
 
-        Tan_dh, Tan_dv = cos *Tan_dh - sin*Tan_dv, sin * Tan_dh + cos*Tan_dv #カメラのローテーションの効果
-        self.Ho_cam = np.arctan(Tan_dh)
-        self.Ve_cam = np.arctan(Tan_dv)
-        xx = np.cos(theta_ve0)*np.cos(theta_ho0) - np.sin(theta_ho0) * Tan_dh - np.sin(theta_ve0) *np.cos(theta_ho0) *Tan_dv
-        yy = np.cos(theta_ve0)*np.sin(theta_ho0) + np.cos(theta_ho0) * Tan_dh - np.sin(theta_ve0) *np.sin(theta_ho0) *Tan_dv
-        zz = np.sin(theta_ve0) + np.cos(theta_ve0) *Tan_dv
+        Tan_dx, Tan_dy = cos *Tan_dx - sin*Tan_dy, sin * Tan_dx + cos*Tan_dy #カメラのローテーションの効果
+        self.Ho_cam = np.arctan(Tan_dx)
+        self.Ve_cam = np.arctan(Tan_dy)
+        yy = np.cos(theta_ve0)*np.sin(theta_ho0) + np.cos(theta_ho0) * Tan_dx - np.sin(theta_ve0) *np.sin(theta_ho0) *Tan_dy
+        xx = np.cos(theta_ve0)*np.cos(theta_ho0) - np.sin(theta_ho0) * Tan_dx - np.sin(theta_ve0) *np.cos(theta_ho0) *Tan_dy
+        zz = np.sin(theta_ve0) + np.cos(theta_ve0) *Tan_dy
 
         self.Ve_theta0 = np.arctan2(zz, np.sqrt(xx**2+yy**2))
         self.Ho_theta0 = np.arctan2(yy,xx)
